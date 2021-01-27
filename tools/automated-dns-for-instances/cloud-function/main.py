@@ -18,13 +18,13 @@ import json
 import re
 import time
 
-PROJECT_ID='storied-glazing-255921'
+PROJECT_ID='your-project-id'
 ZONE='test-zone'
-DOMAIN='sabre-gcp.com.'
+DOMAIN='your.domain.'
 TTL=3600
 
-env_folders = { '659459957450': 'dev', '414067823882': 'prod' }
-bu_folders = { '1021170792996': 'shs', '1085585681071': 'shs' }
+env_folders = { 'folder_id_for_dev': 'dev', 'folder_id_for_prod': 'prod' }
+bu_folders = { 'bu2_folder_id': 'bu2', 'bu1_folder_id': 'bu1' }
 
 client = dns.Client(project=PROJECT_ID)
 zone = client.zone(ZONE, DOMAIN)
