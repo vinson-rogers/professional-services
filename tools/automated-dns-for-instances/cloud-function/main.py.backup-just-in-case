@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import base64
 from google.cloud import dns
-import time
+import json
 import re
+import time
 
 PROJECT_ID='storied-glazing-255921'
 ZONE='test-zone'
@@ -27,6 +29,12 @@ bu_folders = { '1021170792996': 'shs', '1085585681071': 'shs' }
 client = dns.Client(project=PROJECT_ID)
 zone = client.zone(ZONE, DOMAIN)
 
+def justprintdata(event, context):
+    if event.get('data'):
+        data = base64.b64decode(event['data']).decode('utf-8')
+        data = json.loads(data)
+        print(data)
+
 def find_by_name(name):
     records = zone.list_resource_record_sets()
     for record in records:
@@ -34,45 +42,38 @@ def find_by_name(name):
             print('Found existing record:',record.name)
             rs = zone.resource_record_set(record.name, record.record_type, record.ttl, record.rrdatas)
             return(rs)
-    return False
+    return None
 
 def get_env_and_bu(data):
     bu = 'default'
     env = 'default'
     # determine env/bu folder then map to portions of dns name
     for i in data['asset']['ancestors']:
-        #print(i)
         match = re.search(r"folders\/(.+)", i)
-        if match is not None and match[1] in env_folders:
-            #print(match[1])
-            #print(env_folders[match[1]])
+        if match is not None and env_folders.get(match[1]):
             env = env_folders[match[1]]
-        if match is not None and match[1] in bu_folders:
-            #print(match[1])
-            #print(bu_folders[match[1]])
+        if match is not None and bu_folders.get(match[1]):
             bu = bu_folders[match[1]]
     return(bu,env)
 
 def vmToDNS(event, context):
-    import base64, json
     changes=zone.changes()
     valid_statuses = ['STAGING','DELETED']
     bu = 'default'
     env = 'default'
 
-    if 'data' in event:
+    if event.get('data'):
         data = base64.b64decode(event['data']).decode('utf-8')
         data = json.loads(data)
-        print(data)
         if 'deleted' in data and data['deleted'] == True:
             status = 'DELETED'
             print('Will DELETE',data['asset']['name'])
             match = re.search(r"/instances\/(.+)", data['asset']['name'])
             if match is not None:
-                print(match[1])
                 name = match[1]
-            if 'labels' in data['priorAsset']['resource']['data']:
-                if 'dns-name' in data['priorAsset']['resource']['data']['labels']:
+            if data['priorAsset']['resource']['data'].get('labels'):
+                if data['priorAsset']['resource']['data']['labels'].get(
+                    'dns-name'):
                     name = data['priorAsset']['resource']['data']['labels']['dns-name']
         else:
             status = data['asset']['resource']['data']['status']
@@ -83,25 +84,25 @@ def vmToDNS(event, context):
     if 'STAGING' in status:
         print(f'Handling status', status)
         name = data['asset']['resource']['data']['name']
-        if 'labels' in data['asset']['resource']['data']:
-            if 'dns-name' in data['asset']['resource']['data']['labels']:
+        if data['asset']['resource']['data'].get('labels'):
+            if data['asset']['resource']['data']['labels'].get('dns-name'):
                 name = data['asset']['resource']['data']['labels']['dns-name']
         ip = data['asset']['resource']['data']['networkInterfaces'][0]['networkIP']
 
     elif 'DELETED' in status:
         pass
     else:
-        print(f'Status {status} not handled!')
+        # all other statuses are not handled
         return(True)
 
     # check for existing and mark for deletion
     name = f'{name}.{bu}.{env}'
     del_record_set = find_by_name(name)
-    if del_record_set is not False:
-        print('Deleting existing record for', name)
+    if del_record_set is not None:
+        print('Deleting record for', name)
         changes.delete_record_set(del_record_set)
-    # clear status for deleted if we find no records
-    elif 'deleted' in data and data['deleted'] == True:
+    elif 'DELETED' in status:
+        # skip execution for deleted if no existing records
         status = 'noop'
 
     # add records for new VMs

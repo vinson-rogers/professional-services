@@ -1,0 +1,9 @@
+variable org_id {}
+variable project_id {}
+variable region {}
+variable zone {}
+variable feed_id {}
+variable function_location {}
+variable function_bucket_name {}
+variable function_name {}
+variable function_desc {}

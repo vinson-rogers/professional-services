@@ -1,0 +1,7 @@
+#!/bin/sh
+
+for env in dev prod;
+do
+  	echo "Project: ${env}-sh-t1-app-300917"
+	gcloud compute instances create vmtodns-01 --project=${env}-sh-t1-app-300917
+done

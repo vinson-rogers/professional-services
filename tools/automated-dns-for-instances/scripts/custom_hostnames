@@ -1,0 +1,6 @@
+#!/bin/sh
+
+for env in dev prod;
+do
+	gcloud compute instances create vmtodns-02 --project=${env}-sh-t1-app-300917 --labels=dns-name=custom-dns-${env}
+done
