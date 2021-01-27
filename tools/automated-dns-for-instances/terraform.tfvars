@@ -1,5 +1,5 @@
-org_id     = 367171320111
-project_id = "storied-glazing-255921"
+org_id     = <ORG_ID_NUMBER>
+project_id = "<PROJECT_ID>"
 region     = "us-central1"
 zone       = "us-central1-f"
 feed_id    = "org_ai_feed_compute"
