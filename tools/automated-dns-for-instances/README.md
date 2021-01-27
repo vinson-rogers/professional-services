@@ -1,5 +1,9 @@
 # Automating Cloud DNS for VM Instances Tool
 
+
+# THESE INSTRUCTIONS TO BE SUPERSEDED BY TERRAFORM BASED DEPLOYMENT
+
+
 ## 1. Overview
 Using this document you will learn how to automate the creation and deletion of DNS ‘A’ records for compute instances on Google Cloud Platform.  We will use several GCP services to monitor virtual machine changes and act on specific events during their lifecycle. 
 
